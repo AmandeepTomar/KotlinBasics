@@ -1,4 +1,4 @@
-package com.amandeep.kotlinbasics.kotlin.variable
+package com.amandeep.kotlinbasics.kotlin.basics
 
 
 fun main() {
