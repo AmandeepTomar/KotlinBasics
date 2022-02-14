@@ -1,4 +1,4 @@
-package com.amandeep.kotlinbasics.kotlin.immutable
+package com.amandeep.kotlinbasics.kotlin.immutableinjava
 
 /**
  * 1. Make class final so that it can not be a sub class

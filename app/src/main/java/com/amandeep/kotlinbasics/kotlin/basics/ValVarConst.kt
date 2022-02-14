@@ -31,7 +31,7 @@ fun main() {
 
 }
 // ========================================================
-/*
+/**
     CONST -> We can not re-assign the values once assign , it's similar to val but the only difference it this one is
     compile-time constant. we can not assign values by functions or class.
     1. it is used to declared the properties which are immutable (read only)

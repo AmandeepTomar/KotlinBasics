@@ -1,4 +1,4 @@
-package com.amandeep.kotlinbasics.kotlin.immutable;
+package com.amandeep.kotlinbasics.kotlin.immutableinjava;
 
 
 
