@@ -230,4 +230,127 @@ fun main() = runBlocking {
 - Dispatchers.DEFAULT
 - Dispatchers.UNCONFINED
 
+### Coroutine Exceptions
+
+- When the exception occur it cancel itself and propagated the exception to its parent launch.
+
+```kotlin
+// In this example we will get the exception that will caught by `handler`.
+// Before caught the exception it will complete the Success, because it will delay 400 in first launch.
+// if that delay is less 10 then both launch will be cancelled. 
+
+val handler = CoroutineExceptionHandler { coroutineContext, throwable ->
+    Log.e("TAG", "handleException : ${throwable.cause}")
+}
+lifecycleScope.launch(handler) {
+    launch {
+        launch {
+            delay(10)
+            throw Exception("Error")
+        }
+    }
+
+    launch {
+        delay(100)
+        println("Success ")
+    }
+}
+```
+
+In this Example launch is wrapped by `supervisorScope` so only that job get exception will be
+cancelled and others will be called successfully and print values.
+
+```kotlin
+
+val handler = CoroutineExceptionHandler { coroutineContext, throwable ->
+    Log.e("TAG", "handleException : ${throwable.cause}")
+}
+lifecycleScope.launch(Dispatchers.Main + handler) {
+    supervisorScope {
+        launch {
+            launch {
+                delay(40)
+                throw Exception("Coroutine 1 Error")
+            }
+        }
+
+        launch {
+            delay(100)
+            println("Coroutine 2 sccess")
+        }
+
+        launch {
+            delay(400)
+            println("Coroutine 3 sccess")
+        }
+    }
+
+}
+```
+
+#### Problem
+
+Suppose we have a coroutine job that is cancel after some time and the network call is in the way
+than What happen to the coroutine?
+
+- NOTE: - When we hit the `job.cancel()`, cancellation required cooperation, when we are doing
+  something that is taking time and like reading list of files , We have to make our coroutine
+  cooperative to make sure the cancelable will works. So we have to check at time of felting file
+  that coroutine is active or not. by using `ensureActive()` or `yield()`.
+- As we launched the coroutine and its doing some long running task job and we cancel the job. so it
+  will throw the `CancelationException` so wee ned catch that exception specifically. or we need to
+  catch the specif exceptions.
+- If we catch with `Exception` only then it will catch the `CancellationException` Also and job is
+  running and doing the jobs but that should not the behaviour.
+- Check the code in below. Solution.
+- Correct way to doing cancel.
+
+```kotlin
+    lifecycleScope.launch {
+    val job = launch {
+        try {
+            delay(1000)
+        } catch (e: HttpRetryException) {
+            e.printStackTrace()
+        }
+        // this code will be called because we cath the CancellationException so that will not perform its cancellation.
+        println("Nope cant print")
+    }
+
+    delay(100)
+    job.cancel()
+}
+```
+
+### Q. How `suspend` function works internally.
+
+- it is a special function that can be suspended without blocking the main thread.
+- Under the Hood, When we call the suspend function then a parameter added in function that
+  is `Continuation`.
+
+```kotlin
+suspend fun callHere() {
+    delay(100)
+}
+// After Compilation 
+
+public static final Object callHere(@NotNull Continuation var1) {
+    Object $continuation;
+    // do stuff here 
+    $continuation = new ContinuationImpl(var1)
+}
+```
+
+- `Continuation ` is taking care of context of suspension and resume. this have the information when
+  this one is need to resume. just like a callback for you provided by coroutine.
+- Its called `Continuation-Passing-Style` its like a Continuation State Machine
+- call load -> suspend , state = 1
+- call load and when task is done -> resume state = 0
+- exit.
+
+- When suspend function return something that means `Work is Completed`
+- When Scope is cancelled that means all children in that scope also cancelled.
+
+
+
 
