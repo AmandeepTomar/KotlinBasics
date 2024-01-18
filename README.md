@@ -533,7 +533,17 @@ class NormalUser(name: String) : User(name)
 ```
 
 #### `reified` Keyword , for check type at compile time it self.
+```kotlin
 
+
+    inline fun <reified T> checkType(value: Any) {
+        if (value is T) {
+            println("Value is of type ${T::class.simpleName}")
+        } else {
+            println("Value is not of type ${T::class.simpleName}")
+        }
+    }
+```
 
 #### Type Erasure
 - Like when we have same-method name and same type of parameters and but with difference type of element.
