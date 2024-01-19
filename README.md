@@ -1,44 +1,199 @@
-# Kotlin Basics 
+# Kotlin Basics
+
 - Arrays
 - Sealed class and interfaces
-- Mutable and immutable casses
+- Mutable and immutable classes
 - Strings
 - Val , var , const , lamda , highorder function.
 - Coroutine and their working
 
 
-## Sealed class and interface
-- `Sealed classes and interfaces` represent restricted class hierarchies that provide more control over inheritance. All direct subclasses of a sealed class are known at compile time.
-- For example, third-party clients can't extend your sealed class in their code.
-- The same works for `sealed interfaces` and their implementations: once a module with a sealed interface is compiled, no new implementations can appear.
-- sealed classes are similar to enum classes: the set of values for an enum type is also restricted, but each enum constant exists only as a single instance, whereas a subclass of a sealed class can have multiple instances, each with its own state
-- Direct subclasses of sealed classes and interfaces must be declared in the same package. 
-- Example:-
+## Scope functions
+- Scope functions are high order function in kotlin. 
+- Scope function that return the lambda 
+  - let , run , with
+- Scope function that return the object it self 
+  - also , apply
+- Scope function that object reference to `this`
+  - with , run and apply.
+- Scope function that object reference to `it`
+  - let , also.
+  - **let**
+    - it will use to check the nullability of calling object.
+    - context of object refer by it.
+    - return the lamda, last like of block.
+  - **also**
+    - Similar to let , context object refer by it.
+    - retun the same instance of object.
+    - its like we do and also do it.
+  - **run**
+    - Similar to apply,
+    - contest object refer to this.
+    - return the lamda , last line of lock.
+  - **apply**
+    - its like apply the modification on object, it is used to modify the property of object.
+    - object context refer by this
+    - return the object itself
+  - **with**
+    - similar to run,
+    - context object refer with this.
+    - return lambda
+- Example 
 ```kotlin
-    sealed interface Error
-    
-    sealed class IOError(): Error
-    
-    class FileReadError(val f: File): IOError()
-    class DatabaseError(val source: DataSource): IOError()
-    
-    object RuntimeError : Error
-```  
 
-- Sealed classes and when expression 
-```kotlin
-    fun log(e: Error) = when(e) {
-        is FileReadError -> { println("Error while reading file ${e.file}") }
-        is DatabaseError -> { println("Error while reading from database ${e.source}") }
-        RuntimeError ->  { println("Runtime error") }
-        // the `else` clause is not required because all the cases are covered
-    }
+        var name: String? = "Initial"
+
+        val student = Student()
+
+        val length: Int = name?.let {
+            // return lambda
+            val newValue = it.plus("Name")
+            newValue.length
+        } ?: 0
+
+        println("length with null safety and with let $length")
+
+        val studentRun: String = Student().run {
+            // return lambda
+            name = "Name Run"
+            age = 151
+            "$name and $age WithRun"
+        }
+
+        println("studentRun $studentRun")
+
+        val inWords: String = with(Student()) {
+            name = "With Name"
+            age = 10
+            // return lambda
+            "name $name and Age $age"
+        }
+
+
+        val studentAfterAlso: Student = student.also {
+            // return same object
+            "Name of $it" // no use
+            it.age = 10
+        }
+
+        println("StudentAfterAlso $studentAfterAlso")
+
+        val studentApply: Student = Student().apply {
+            // return Same object
+            name = "Apply Name"
+            age = 15
+        }
+
 ```
 
+## Backing Properties and Fields
+
+- Backing Field
+    - Backing field in kotlin represent by `field` keywords, it will use to store the value of its
+      own property.
+    - We can use `field` backing field only with getter and setter in kotlin.
+    - if we use the property name within the property getter and setter it will
+      throw `StackOverFlowException` because it will call itself in recursion.
+    - Backing field is generated when the are call with in the getter and setter or that its own
+      property.
+    - Example: this will not create the backing field because it is using someother property not
+      included field in this getter.
+    ```kotlin
+        val isPass: Boolean
+      get() = marks > 30
+    var name:String = "" // No backing field generated.
+    ```
+  - Example:- in this example we are using `field` keywords so the backing field is generated.
+  ```kotlin
+        var name: String = "NO Name"
+        get() {
+            println("Name Student => $field")
+            return "Complete Name  => $field"
+        }
+        set(value) {
+            field = if (marks > 80) "Good Student $value"
+            else value
+        }
+  ```
+- **Backing Properties** 
+  - This one is like we will provide the immutable property to the outside so the dataset change will be done by its own class only. 
+  - Example -> do the things in viewModel when we expose the data by flow or live data. 
+
+```kotlin
+
+class Student {
+
+    private var _name: String = ""
+    val name: String get() = _name
+
+    // We can do the changes if we do this. 
+    var courseName: String = ""
+        get() = _courseName // backing property 
+    //after this we will get the same value not updated because
+// in get() we are returning the _courseName. 
+}
+
+fun main() {
+    val student = Student()
+    student.name
+    student.name = "hello" // its can not be compile, as it is val.
+}
+
+
+```
+  
+
+## Sealed class and interface
+
+- `Sealed classes and interfaces` represent restricted class hierarchies that provide more control
+  over inheritance. All direct subclasses of a sealed class are known at compile time.
+- For example, third-party clients can't extend your sealed class in their code.
+- The same works for `sealed interfaces` and their implementations: once a module with a sealed
+  interface is compiled, no new implementations can appear.
+- sealed classes are similar to enum classes: the set of values for an enum type is also restricted,
+  but each enum constant exists only as a single instance, whereas a subclass of a sealed class can
+  have multiple instances, each with its own state
+- Direct subclasses of sealed classes and interfaces must be declared in the same package.
+- Example:-
+
+```kotlin
+    sealed interface Error
+
+sealed class IOError() : Error
+
+class FileReadError(val f: File) : IOError()
+class DatabaseError(val source: DataSource) : IOError()
+
+object RuntimeError : Error
+```  
+
+- Sealed classes and when expression
+
+```kotlin
+    fun log(e: Error) = when (e) {
+    is FileReadError -> {
+        println("Error while reading file ${e.file}")
+    }
+    is DatabaseError -> {
+        println("Error while reading from database ${e.source}")
+    }
+    RuntimeError -> {
+        println("Runtime error")
+    }
+    // the `else` clause is not required because all the cases are covered
+}
+```
 
 #### Why Sealed Class over Abstract Class?
-- Sealed classes are abstract by itself, and cannot be instantiated directly. So let’s take a pause here. If Sealed classes are abstract by default, why can’t we use an abstract class instead of a sealed class in the first place? Well, the catch here is an abstract class can have their hierarchies anywhere in the project, whereas a sealed class should contain all the hierarchies in the same file.
-- Another important advantage of using a sealed class over abstract class is that it helps the IDE to understand the different types involved and thereby helps the user in auto-filling and avoiding spell mistakes.
+
+- Sealed classes are abstract by itself, and cannot be instantiated directly. So let’s take a pause
+  here. If Sealed classes are abstract by default, why can’t we use an abstract class instead of a
+  sealed class in the first place? Well, the catch here is an abstract class can have their
+  hierarchies anywhere in the project, whereas a sealed class should contain all the hierarchies in
+  the same file.
+- Another important advantage of using a sealed class over abstract class is that it helps the IDE
+  to understand the different types involved and thereby helps the user in auto-filling and avoiding
+  spell mistakes.
 
 ==================================================================
 
@@ -453,31 +608,31 @@ fun <T> findElements(
 - We can use contravariance, where we want the class or interface use generic type as input.
 
 ```kotlin
-interface Persone<in P>{
-    
-    fun doSomething(p:P) // this will compile.
-    
-    fun doSomethingAndReturn(p:P) : P // Error , compile time 
-    
-    val persone:P // compile type error 
+interface Persone<in P> {
+
+    fun doSomething(p: P) // this will compile.
+
+    fun doSomethingAndReturn(p: P): P // Error , compile time 
+
+    val persone: P // compile type error 
 }
 
 fun main() {
 
-  // val userComparator:Comparable<User> = adminComparator // it is not compile due to contravariance.
+    // val userComparator:Comparable<User> = adminComparator // it is not compile due to contravariance.
 
-  val adminComparator : Comparable<AdminUser> = userComparator // this will compile
+    val adminComparator: Comparable<AdminUser> = userComparator // this will compile
 }
-val adminComparator :Comparable<AdminUser> = object :Comparable<AdminUser> {
-  override fun compareTo(other: AdminUser): Int {
-    return 1;
-  }
+val adminComparator: Comparable<AdminUser> = object : Comparable<AdminUser> {
+    override fun compareTo(other: AdminUser): Int {
+        return 1;
+    }
 }
 
-public val userComparator :Comparable<User> = object :Comparable<User>{
-  override fun compareTo(other: User): Int {
-    return 1;
-  }
+public val userComparator: Comparable<User> = object : Comparable<User> {
+    override fun compareTo(other: User): Int {
+        return 1;
+    }
 }
 
 ```
@@ -533,32 +688,38 @@ class NormalUser(name: String) : User(name)
 ```
 
 #### `reified` Keyword , for check type at compile time it self.
+
 ```kotlin
 
 
-    inline fun <reified T> checkType(value: Any) {
-        if (value is T) {
-            println("Value is of type ${T::class.simpleName}")
-        } else {
-            println("Value is not of type ${T::class.simpleName}")
-        }
+inline fun <reified T> checkType(value: Any) {
+    if (value is T) {
+        println("Value is of type ${T::class.simpleName}")
+    } else {
+        println("Value is not of type ${T::class.simpleName}")
     }
+}
 ```
 
 #### Type Erasure
-- Like when we have same-method name and same type of parameters and but with difference type of element.
+
+- Like when we have same-method name and same type of parameters and but with difference type of
+  element.
+
 ```kotlin
 //this will not compile, because they have different type of List String , Int with same function name.
-fun performList(list:List<String>)
-fun performList(list:List<Int>)
+fun performList(list: List<String>)
+fun performList(list: List<Int>)
 
 // to fix that problem we can use @JvmName(")
 
 @JvmName("performListString")
-fun performList(list: List<String>){}
+fun performList(list: List<String>) {
+}
 
 @JvmName("performListInt")
-fun performList(list: List<Int>){}
+fun performList(list: List<Int>) {
+}
 
 
 ```
