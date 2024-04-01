@@ -5,6 +5,16 @@ fun main() {
     // lamda function
     println(sum(5,10))
     add(10,5)
+
+    val lmbdaEmp:(Int,Int)->Int = {x:Int,y:Int->x+y}
+
+    lambdaAdParams(5,5, myLambda = {a,b-> a+b})
+
+
+}
+
+fun lambdaAdParams(a:Int,b:Int,myLambda:(Int,Int)->Int):Int{
+    return  myLambda(a,b)
 }
 
 // Normal Function

@@ -6,83 +6,132 @@
 - Strings
 - Val , var , const , lamda , highorder function.
 - Coroutine and their working
+- flow and operators
 
+## Lambda and Higher order function in Kotlin
 
-## Scope functions
-- Scope functions are high order function in kotlin. 
-- Scope function that return the lambda 
-  - let , run , with
-- Scope function that return the object it self 
-  - also , apply
-- Scope function that object reference to `this`
-  - with , run and apply.
-- Scope function that object reference to `it`
-  - let , also.
-  - **let**
-    - it will use to check the nullability of calling object.
-    - context of object refer by it.
-    - return the lamda, last like of block.
-  - **also**
-    - Similar to let , context object refer by it.
-    - retun the same instance of object.
-    - its like we do and also do it.
-  - **run**
-    - Similar to apply,
-    - contest object refer to this.
-    - return the lamda , last line of lock.
-  - **apply**
-    - its like apply the modification on object, it is used to modify the property of object.
-    - object context refer by this
-    - return the object itself
-  - **with**
-    - similar to run,
-    - context object refer with this.
-    - return lambda
-- Example 
+- In kotlin we call them first class citizen , like we can store function in variable , we cam pass
+  lambda to function , pass function as parameter.
+- take function as input or return function as output
+- A function that does not have a name called lambda `val sum = {x:Int,y:Int -> x+y}`
+
+```kotlin
+fun main() {
+    calculate(2, 3, ::sum)
+}
+
+fun sum(a: Int, b: Int): Int {
+    return a + b
+}
+
+fun calculate(a: Int, b: Int, add: (Int, Int) -> Int) {
+    val sum = add(a, b)
+    println(sum)
+}
+```
+
+## Extension function with
+
+- We do not need to extends the object to extends is current functionality in kotlin.
+
 ```kotlin
 
-        var name: String? = "Initial"
+val person = Person().myFunction {
+    name = "My Name"
+    sirName = "My Sir Name"
+}
 
-        val student = Student()
+class Person {
+    var name: String = ""
+    var sirName: String = ""
+}
 
-        val length: Int = name?.let {
-            // return lambda
-            val newValue = it.plus("Name")
-            newValue.length
-        } ?: 0
+//extension function 
 
-        println("length with null safety and with let $length")
+fun <T> T.myFunction(block: T.() -> Unit): T {
+    block()
+    return this
+}
 
-        val studentRun: String = Student().run {
-            // return lambda
-            name = "Name Run"
-            age = 151
-            "$name and $age WithRun"
-        }
+```
 
-        println("studentRun $studentRun")
+## Scope functions
 
-        val inWords: String = with(Student()) {
-            name = "With Name"
-            age = 10
-            // return lambda
-            "name $name and Age $age"
-        }
+- Scope functions are high order function in kotlin.
+- Scope function that return the lambda
+    - let , run , with
+- Scope function that return the object it self
+    - also , apply
+- Scope function that object reference to `this`
+    - with , run and apply.
+- Scope function that object reference to `it`
+    - let , also.
+    - **let**
+        - it will use to check the nullability of calling object.
+        - context of object refer by it.
+        - return the lamda, last like of block.
+    - **also**
+        - Similar to let , context object refer by it.
+        - retun the same instance of object.
+        - its like we do and also do it.
+    - **run**
+        - Similar to apply,
+        - contest object refer to this.
+        - return the lamda , last line of block.
+    - **apply**
+        - its like apply the modification on object, it is used to modify the property of object.
+        - object context refer by this
+        - return the object itself
+    - **with**
+        - similar to run,
+        - context object refer with this.
+        - return lambda
+- Example
+
+```kotlin
+
+var name: String? = "Initial"
+
+val student = Student()
+
+val length: Int = name?.let {
+    // return lambda
+    val newValue = it.plus("Name")
+    newValue.length
+} ?: 0
+
+println("length with null safety and with let $length")
+
+val studentRun: String = Student().run {
+    // return lambda
+    name = "Name Run"
+    age = 151
+    "$name and $age WithRun"
+}
+
+println("studentRun $studentRun")
+
+val inWords: String = with(Student()) {
+    name = "With Name"
+    age = 10
+    // return lambda
+    "name $name and Age $age"
+}
 
 
-        val studentAfterAlso: Student = student.also {
-            // return same object
-            "Name of $it" // no use
-            it.age = 10
-        }
+val studentAfterAlso: Student = student.also {
+    // return same object
+    "Name of $it" // no use
+    it.age = 10
+}
 
-        println("StudentAfterAlso $studentAfterAlso")
+println("StudentAfterAlso $studentAfterAlso")
 
-        val studentApply: Student = Student().apply {
-            // return Same object
-            name = "Apply Name"
-            age = 15
-        }
+val studentApply: Student = Student().apply {
+    // return Same object
+    name = "Apply Name"
+    age = 15
+}
 
 ```
 
@@ -103,7 +152,7 @@
       get() = marks > 30
     var name:String = "" // No backing field generated.
     ```
-  - Example:- in this example we are using `field` keywords so the backing field is generated.
+    - Example:- in this example we are using `field` keywords so the backing field is generated.
   ```kotlin
         var name: String = "NO Name"
         get() {
@@ -115,9 +164,10 @@
             else value
         }
   ```
-- **Backing Properties** 
-  - This one is like we will provide the immutable property to the outside so the dataset change will be done by its own class only. 
-  - Example -> do the things in viewModel when we expose the data by flow or live data. 
+- **Backing Properties**
+    - This one is like we will provide the immutable property to the outside so the dataset change
+      will be done by its own class only.
+    - Example -> do the things in viewModel when we expose the data by flow or live data.
 
 ```kotlin
 
@@ -141,7 +191,6 @@ fun main() {
 
 
 ```
-  
 
 ## Sealed class and interface
 
@@ -210,15 +259,16 @@ thread and resume in another one.
 #### Structured Concurrency
 
 - Every coroutine need to be started in a logical scope with a limited life time. If the life time
-  of scope scope end all the coroutine launch with in the scope are not completed yet will be
+  of scope end all the coroutine launch with in the scope are not completed yet will be
   cancelled.
 - Coroutine started in the same scope form a hierarchy.
 - A parent Job won't complete until all the child job get completed.
 - Cancelling a parent job will cancel all the child.
-- Cancelling a child will not cancel teh parent.
+- Cancelling a child will not cancel the parent.
 - **Ordinary JOB** if a child coroutine get failed , exception is propagated upwards and cancel all
   its jobs.
-- **Supervise JOB** if a child coroutine get failed , exception is not propagated upwards and do not
+- **Supervisor JOB** if a child coroutine get failed , exception is not propagated upwards and do
+  not
   cancel all its jobs.
     - The `SupervisorJob` allows you to define a hierarchy of coroutines where the failure or
       cancellation of one coroutine does not affect the others.
@@ -228,7 +278,7 @@ thread and resume in another one.
 - Suspending function , A function with a `suspend` modifier called suspended function.
     - It is call from another suspended function or coroutine scope.
     - It can not be call from normal function.
-    - We can call the normal function fro inside a coroutine.
+    - We can call the normal function from inside a coroutine.
 
 ```kotlin
 
@@ -289,7 +339,7 @@ fun doSomeLongRunningTask() {
 **To cancel a coroutine , It should be cooperative**
 
 - `delay(),yield(),withContext(),withTimeout(), CoroutineScope.isActive ` these are the function
-  that makes a coroutine coopera tive.
+  that makes a coroutine cooperative.
 - `job.cancelAndJoin()` , it will cancel the coroutine if coroutine is cooperative , else wait to
   finish the coroutine.
 - `CoroutineScope.isActive()` to check the coroutine is active or not.
@@ -299,7 +349,7 @@ fun doSomeLongRunningTask() {
 - We can handle by `try{ } catch{} throw CancellationException`. Any function that is cancelable
   from coroutine package will throw the `CancellationException` , when it got cancelled.
 - We can not run a `suspended` function from the `finally{}` block.
-- If we want to execute some `suspend` function from `finally{}` block than wran the code
+- If we want to execute some `suspend` function from `finally{}` block than warn the code
   with `wthContext(NonCancelable)`
     - ```kotlin
         try{
@@ -444,7 +494,7 @@ val handler = CoroutineExceptionHandler { coroutineContext, throwable ->
 lifecycleScope.launch(handler) {
     launch {
         launch {
-            delay(10)
+            delay(400)
             throw Exception("Error")
         }
     }
@@ -468,7 +518,7 @@ lifecycleScope.launch(Dispatchers.Main + handler) {
     supervisorScope {
         launch {
             launch {
-                delay(40)
+                delay(400)
                 throw Exception("Coroutine 1 Error")
             }
         }
@@ -497,7 +547,7 @@ than What happen to the coroutine?
   cooperative to make sure the cancelable will works. So we have to check at time of felting file
   that coroutine is active or not. by using `ensureActive()` or `yield()`.
 - As we launched the coroutine and its doing some long running task job and we cancel the job. so it
-  will throw the `CancelationException` so wee ned catch that exception specifically. or we need to
+  will throw the `CancelationException` so we need catch that exception specifically. or we need to
   catch the specif exceptions.
 - If we catch with `Exception` only then it will catch the `CancellationException` Also and job is
   running and doing the jobs but that should not the behaviour.
@@ -512,7 +562,7 @@ than What happen to the coroutine?
         } catch (e: HttpRetryException) {
             e.printStackTrace()
         }
-        // this code will be called because we cath the CancellationException so that will not perform its cancellation.
+        // this code will be called because we catch the CancellationException so that will not perform its cancellation.
         println("Nope cant print")
     }
 
@@ -606,6 +656,7 @@ fun <T> findElements(
   that super class.
 - We can use the super type in place of sub type.
 - We can use contravariance, where we want the class or interface use generic type as input.
+- It allows you to use a more generic subtype where a less generic supertype is expected
 
 ```kotlin
 interface Persone<in P> {
@@ -642,6 +693,7 @@ public val userComparator: Comparable<User> = object : Comparable<User> {
 - Parameters can only be `produce (return)` values
 - Covariance is used to produce the items , that means return the item , if we tried to consume them
   that compiler will show us error at the compiler time itself.
+- where you want to return more specific subtypes based on the implementation.
   -`List<out E>`
     - E is the type of elements list contains
     - The list is covariant in its list type , due to this properties we can do in kotlin.
@@ -723,5 +775,211 @@ fun performList(list: List<Int>) {
 
 
 ```
+
+## Inline , crossinline , noinline , where
+
+- `Inline`
+- We used inline keyword in function that take parameter as lambda. if we will not mark these
+  function as inline then it will take memory and just call like function.
+- it cut the body , and paste in function.
+- inline function copy past complete code in function body it has issue,
+- like we write two function , in below example the second method is nol call. because first one
+  return.as it copy and paste in function so it will act as local return for main().
+- to prevent this `crossinline` , To prevent to non-local return.
+- `noinline` it will treat the lambda as function. also return is non-local.
+
+```kotlin
+fun main() {
+
+    printMessage {
+        println("Messagge")
+        return
+    }
+
+    printMessage { print("SecondMessage") }
+
+}
+
+
+inline fun printMessage(a: () -> Unit) {
+    a.invoke()
+}
+
+inline fun applyTransformation(
+    videos: List<Video>,
+    noinline transformation: (Video) -> Video, // do not want this fun as inline
+    crossinline onComplete: (List<Video>) -> Unit // prevent non local return
+) {
+    onComplete(videos.map(transformation))
+}
+
+```
+
+## Reified
+
+- When we required type in side function in generics than we need to use that.
+- it is always used with inline.
+
+```kotlin
+
+inline fun <reified T : video> filterList(list: List<Video>): List<T> {
+    return list.filterIsInstance<T>()
+}
+```
+
+## Where
+
+- We want to restrict the type of genetic types
+
+```kotlin
+class PlayVideo<T> where T : Video {
+
+}
+```
+
+## Flow
+
+- FLow is a coroutine that can emit multiple values over a period of times.
+- it is cold flow, that means if any one is not collection that flow than it is not emitting.
+
+### FLOW Operator
+
+- transform the flow
+- `flow.filter{ time%2==0}`
+- `map{time*time}`
+- `onEach` its not transform
+- `reduce{accumulator,value->accumulator+value}` adding all elements of list.{1,2,3,4,5} = 15
+- `fold(100){accumulator,value->accumulator+value}` => 115.
+- `flatmapCombine{}`
+- `flatmapMerge{}`
+- `flatmaplatest{}`
+- `buffer()`Like we have a flow that is ordering the food and another on is consuming the food. so
+  both produces and consumer run on different coroutines.
+- `conflate()` it will skip.
+- `collectLatst{}` collecting the latest.
+
+### Shared flow and State flow
+
+## State Flow
+
+- it is used to keep the State. its not lifecycle aware , it is similar like live data.
+- it is hot flow. it will also do something if there is no collector.
+- it has default value
+-
+
+## Shared Flow
+
+- IF we want to share the flow between multiple collectors than we should use this.
+- it is also hot flow.
+- we should use collect in place of collectLatest because we do not want to drop any events.
+- if we emit shared flow first than collect than it will lost events.
+- So first collect the events than emit. means collector should be registered.
+- all the one time events just like you do not want to show the error snack-bar again and again,
+  navigation events again and again.
+
+## Combine
+
+- it is used to combine two flow together.
+- Like we have a user , that has some post and need to check isAuthenticated or not.
+- combine is called when either of isAuthenticated or user get changed.
+
+```kotlin
+isAuthenticated.combine(user) { isAuthenticated, user ->
+    if (isAuthenticated) user else null
+}.combine(post) { user, post ->
+    createNewObject(user, post)
+}.launchIn(viewModelScope)
+
+```
+
+## Zip
+
+it will wit for the emission of both flow when both flow will emit then the zip{}. is called.
+
+```kotlin
+
+flow1.zip(flow2) { flow1, floe2 ->
+    print(flow1, flow2)
+}
+```
+
+## Merge
+
+- it will merge all flow into one flow.
+- All the should be of same toe else it rerun any type.
+
+```kotlin
+merge(flow1, flow2).onEach {
+
+}
+```
+
+Channel
+
+- if we have just one collector than we should use the channel.
+
+### Collections in Kotlin
+
+- in kotlin we have `kotlin.collection` package
+- Lis
+    - mutableListOf()
+- Set
+  - 
+- Map
+
+## Shallow Copy Vs Deep Copy
+
+#### Shallow Copy
+
+it copy the original object and not create the new object for the nested one, copy as reference, if
+original nested object got changed than copied object value get changed
+
+#### Deep Copy
+
+It copy the original object and also create the new copy or nested objects so when we change in the
+original copy no changes reflect on copied copy.
+
+```kotlin
+fun main() {
+    // it copy the original object and not create the new object for the nested one, copy as reference, if original nested object got changed than copied object value get changed
+    // shallow copy
+    val address = AddressTest("Noida")
+    val original = PersonTest("Amandeep", address)
+    val copied = original.copy(name = "Tomar")
+    println(original)
+    println(copied)
+    address.city = "Banglore"
+    println(original)
+    println(copied) // here copied values of address get changed
+
+    println("deep copy")
+    // deep copy
+    val address1 = AddressTest("Banglore")
+    val original1 = PersonTest("Amandeep", address)
+    val copied1 = original.clone()
+    println(original1)
+    println(copied1)
+    original1.address.city = "New York"
+    println(original1)
+    println(copied1)
+
+}
+
+// shallow Copy
+data class PersonTest(val name: String, var address: AddressTest) : Cloneable {
+
+    public override fun clone(): PersonTest {
+        return PersonTest(name, address.clone())
+    }
+
+}
+data class AddressTest(var city: String) : Cloneable {
+    public override fun clone(): AddressTest {
+        return super.clone() as AddressTest
+    }
+}
+
+```
+
 
   
