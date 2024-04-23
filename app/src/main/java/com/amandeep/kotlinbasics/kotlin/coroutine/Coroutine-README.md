@@ -352,5 +352,11 @@ public static final Object callHere(@NotNull Continuation var1) {
 - When Scope is cancelled that means all children in that scope also cancelled.
 
 
+Reference Must Read 
+
+https://medium.com/androiddevelopers/cancellation-in-coroutines-aa6b90163629
+https://medium.com/androiddevelopers/coroutines-patterns-for-work-that-shouldnt-be-cancelled-e26c40f142ad
+https://medium.com/androiddevelopers/coroutines-patterns-for-work-that-shouldnt-be-cancelled-e26c40f142ad  
+
 
 

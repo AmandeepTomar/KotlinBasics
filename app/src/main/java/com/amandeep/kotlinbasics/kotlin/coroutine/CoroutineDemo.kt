@@ -11,6 +11,10 @@ val scope = CoroutineScope(Job())
 fun main() {
 
     runBlocking { // this on execute on Main thread
+
+        launch { // main thread
+            doSomeLongRunningTask()
+        }
         scope.launch {// create new thread T1
             executeTask()
         }
@@ -31,5 +35,5 @@ suspend fun executeTask(){
 }
 
 fun doSomeLongRunningTask() {
-    print("Hello ${Thread.currentThread().name}")
+    println("Hello ${Thread.currentThread().name}")
 }

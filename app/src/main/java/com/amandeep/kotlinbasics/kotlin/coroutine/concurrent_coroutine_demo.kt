@@ -16,3 +16,9 @@ fun main() = runBlocking {
     print("End Start ${Thread.currentThread().name}")
 }
 
+// o/p  Main Start main
+//returnMessageOne
+//returnMessageTwo
+//Result MessageOne and MessageTwomeasureTime in 1025 ms
+//End Start main
+

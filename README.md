@@ -10,7 +10,8 @@
 
 ## Lambda and Higher order function in Kotlin
 
-- In kotlin we call them first class citizen , like we can store function in variable , we cam pass
+- In kotlin we call kotlin functions as first class citizen , like we can store function in
+  variable , we cam pass
   lambda to function , pass function as parameter.
 - take function as input or return function as output
 - A function that does not have a name called lambda `val sum = {x:Int,y:Int -> x+y}`
@@ -235,8 +236,8 @@ object RuntimeError : Error
 
 #### Why Sealed Class over Abstract Class?
 
-- Sealed classes are abstract by itself, and cannot be instantiated directly. So let’s take a pause
-  here. If Sealed classes are abstract by default, why can’t we use an abstract class instead of a
+- Sealed classes are abstract by itself, and cannot be instantiated directly. If Sealed classes are
+  abstract by default, why can’t we use an abstract class instead of a
   sealed class in the first place? Well, the catch here is an abstract class can have their
   hierarchies anywhere in the project, whereas a sealed class should contain all the hierarchies in
   the same file.
@@ -259,7 +260,7 @@ thread and resume in another one.
 #### Structured Concurrency
 
 - Every coroutine need to be started in a logical scope with a limited life time. If the life time
-  of scope end all the coroutine launch with in the scope are not completed yet will be
+  of scope end/cancel all the coroutine launch with in the scope are not completed yet will be
   cancelled.
 - Coroutine started in the same scope form a hierarchy.
 - A parent Job won't complete until all the child job get completed.
@@ -470,7 +471,10 @@ fun main() = runBlocking {
 
 ### Coroutine Context
 
-- Every coroutine has a coroutine context.
+- Every coroutine has a coroutine context. an interface in Kotlin that defines the behavior of a
+  coroutine using a collection of elements
+- The important elements of CoroutineContext are:
+    - Job , CoroutineDispatcher, CoroutineName, CoroutineExceptionHandler
 
 ### Coroutine Dispatchers
 
@@ -599,6 +603,133 @@ public static final Object callHere(@NotNull Continuation var1) {
 
 - When suspend function return something that means `Work is Completed`
 - When Scope is cancelled that means all children in that scope also cancelled.
+
+### Example How Cancel works in coroutine
+
+```kotlin
+suspend fun work() {
+    val startTime = System.currentTimeMillis()
+    var nextPrintTime = startTime
+    var i = 0
+    while (i < 5) {
+        yield() // due to this it will not printr 4, 5 
+        // print a message twice a second
+        if (System.currentTimeMillis() >= nextPrintTime) {
+            println("Hello ${i++}")
+            nextPrintTime += 500L
+        }
+    }
+}
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val job = launch(Dispatchers.Default) {
+        try {
+            work()
+        } catch (e: CancellationException) {
+            println("Work cancelled!")
+        } finally {
+            println("Clean up!")
+        }
+    }
+    delay(1000L)
+    println("Cancel!")
+    job.cancel()
+    println("Done!")
+}
+
+o / p
+Hello 0
+Hello 1
+Hello 2
+Cancel!
+Done!
+Work cancelled !
+Clean up !
+
+import kotlinx . coroutines . *
+
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val startTime = System.currentTimeMillis()
+    val job = launch(Dispatchers.Default) {
+        var nextPrintTime = startTime
+        var i = 0
+        while (i < 5 && isActive) {
+            // print a message twice a second
+            if (System.currentTimeMillis() >= nextPrintTime) {
+                println("Hello ${i++}")
+                nextPrintTime += 500L
+            }
+        }
+        // the coroutine work is completed so we can cleanup
+        println("Clean up!")
+
+    }
+    delay(1000L)
+    println("Cancel!")
+    job.cancel()
+    println("Done!")
+}
+
+// o/p 
+Hello 0
+Hello 1
+Hello 2
+Cancel!
+Done!
+Clean up !
+
+```
+
+### suspendCoroutine, suspendCancellableCoroutine
+
+- suspendCoroutine and suspendCancellableCoroutine are functions used to create suspending functions
+  from callback-based or future-based asynchronous operations.
+```kotlin
+suspend fun downloadFile(url: String): ByteArray {
+    return suspendCoroutine { continuation ->
+        val request = URL(url).openConnection() as HttpURLConnection
+        request.setRequestProperty("Accept", "application/octet-stream")
+        request.connectAsync { connection ->
+            if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                val inputStream = connection.inputStream
+                val bytes = inputStream.readBytes()
+                continuation.resume(bytes) // Resume with downloaded bytes
+            } else {
+                continuation.resumeWithException(IOException("Download failed"))
+            }
+        }
+    }
+}
+```
+-  Similar to suspendCoroutine, but provides built-in cancellation support.
+
+```kotlin
+suspend fun downloadFileWithCancellation(url: String): ByteArray {
+    return suspendCancellableCoroutine { continuation ->
+        val request = URL(url).openConnection() as HttpURLConnection
+        request.setRequestProperty("Accept", "application/octet-stream")
+
+        continuation.invokeOnCancellation {
+            request.disconnect() // Cleanup on cancellation
+        }
+
+        request.connectAsync { connection ->
+            if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                val inputStream = connection.inputStream
+                val bytes = inputStream.readBytes()
+                continuation.resume(bytes) // Resume with downloaded bytes
+            } else {
+                continuation.resumeWithException(IOException("Download failed"))
+            }
+        }
+    }
+}
+```
+
+Must Read.
+https://medium.com/androiddevelopers/cancellation-in-coroutines-aa6b90163629
+https://medium.com/androiddevelopers/coroutines-patterns-for-work-that-shouldnt-be-cancelled-e26c40f142ad
+https://medium.com/androiddevelopers/coroutines-patterns-for-work-that-shouldnt-be-cancelled-e26c40f142ad
+https://www.youtube.com/watch?v=w0kfnydnFWI
 
 ====================================================================
 
@@ -1017,7 +1148,7 @@ data class AddressTest(var city: String) : Cloneable {
       *     else ->y-x
       *     })
       *   Min , minBy , minWith(), minByOrNull{} // this will return person object
-      *   ,mixOfOrNull{} // this will return value as Int not person object
+      *   ,minOfOrNull{} // this will return value as Int not person object
       *   sum , sumBy{} , sumByDouble{}
     
     * filter{} , FilterKeys{} , FilterValues{} , FilterIndexed{index,value}

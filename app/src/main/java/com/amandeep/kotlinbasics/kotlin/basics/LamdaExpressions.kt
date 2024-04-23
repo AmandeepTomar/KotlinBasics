@@ -8,7 +8,8 @@ fun main() {
 
     val lmbdaEmp:(Int,Int)->Int = {x:Int,y:Int->x+y}
 
-    lambdaAdParams(5,5, myLambda = {a,b-> a+b})
+   val lambdaSum =  lambdaAdParams(5,50, lmbdaEmp)
+    println(lambdaSum)
 
 
 }
@@ -20,7 +21,7 @@ fun lambdaAdParams(a:Int,b:Int,myLambda:(Int,Int)->Int):Int{
 // Normal Function
 fun addTwoNo(a: Int,b: Int){
     val add= a+b;
-    print(add)
+    println(add)
 }
 
 // lamda function

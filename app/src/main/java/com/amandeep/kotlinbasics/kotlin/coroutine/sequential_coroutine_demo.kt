@@ -1,14 +1,26 @@
 package com.amandeep.kotlinbasics.kotlin.coroutine
 
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlin.system.measureTimeMillis
 
+
+// Main Start main
+//returnMessageOne
+//returnMessageTwo
+//Result MessageOne and MessageTwomeasureTime in 2013 ms
+//End Start main
 fun main() = runBlocking {
     println("Main Start ${Thread.currentThread().name}")
     val time = measureTimeMillis {
-        val m1 = returnMessageOne()
-        val m2 = returnMessageTwo()
+//        launch {
+            val m1 = returnMessageOne()
+//        }
+//        launch {
+            val m2 = returnMessageTwo()
+//        }
+
         print("Result $m1 and $m2")
     }
     println("measureTime in $time ms")

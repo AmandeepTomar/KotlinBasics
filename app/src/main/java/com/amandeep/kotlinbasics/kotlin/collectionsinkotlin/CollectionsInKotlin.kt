@@ -37,10 +37,10 @@ fun transformationsInCollections() {
     * */
 
 
-    val associatedList = list.associateBy { it }
+    val associatedList:Map<Int,Int> = list.associateBy { it }
     println(associatedList)
 
-    val personAssociatedList = personList.associateBy { it.name }
+    val personAssociatedList:Map<String,Person> = personList.associateBy { it.name }
     println(personAssociatedList)
 
     val associate = list.associateBy { it }
@@ -159,11 +159,11 @@ fun aggregatorsIsCollections() {
 
     personList.groupingBy { it.company }.eachCount()
 
-    val maxAgeInList = personList.maxByOrNull { it.age } // this will return person object
+    val maxAgeInList:Person? = personList.maxByOrNull { it.age } // this will return person object
     val minAgeInList = personList.minByOrNull { it.age }// this will return person object
     val minByAgeInList = personList.minBy { it.age }
     val maxByAgeInList = personList.maxBy { it.age }
-    val maxOfAgeInList =
+    val maxOfAgeInList:Int? =
         personList.maxOfOrNull { it.age } // this will return value as Int not person object
     val minOfAgeInList =
         personList.minOfOrNull { it.age }// this will return value as Int not person object
