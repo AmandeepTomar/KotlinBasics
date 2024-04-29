@@ -462,12 +462,320 @@ fun main() = runBlocking {
 
 ```
 
+## Concurrency in Coroutine
+
+- Coroutine are much less resource intensive than threads. Each time you want to start a new
+  computation you can start new coroutine.
+- Use coroutine builder to start a new coroutine `launch , async , runBlocking{}, GlobalScope`
+- `aysnc` It return a `Deferred`. that means it promise the result sometime in future. Deferred is a
+  generic type that extends `Job`
+- `launch` its like fire and forgot. its return a `Job` object. we can wait till the join finish by
+  using `job.join()`
+- add `concurrency, use channels`
+
+## Channels in Coroutines
+
+- Channel is used to share information between different coroutine.
+- Writing code with a shared mutable state is quite difficult and error-prone.
+- One coroutine can send information to a channel, while other can receive that information from it.
+- `Coroutine send -> Producer`
+- `Coroutine Receive -> Consumer`
+- One or multiple coroutine can send and receive the information.
+- When many coroutine receive information from the same channel. `each element is handled only once
+  by one of the consumer. Once an element is handled it is removed immediately from the channel.`
+- A Channel is like a queue, in added element at one end and receive from another end.
+- have `suspended send() and receive()`
+- Channel is represented by three different interface
+- `SendChannel` -> producer , only send the information
+- `ReceiveChannel` -> consumer , only receive information
+- `CHannel`
+
+```kotlin
+interface SendChannel<in E> {
+    suspend fun send(element: E)
+    fun close(): Boolean
+}
+
+interface ReceiveChannel<out E> {
+    suspend fun receive(): E
+}
+
+interface Channel<E> : SendChannel<E>, ReceiveChannel<E>
+```
+
+- it receives an element if the channel is not empty; otherwise, it is suspended.
+
+### Unlimited channel
+
+- An unlimited channel is the closest analog to a
+  queue: `producers can send elements to this channel
+  and it will keep growing indefinitely. The send() call will never be suspended. If the program
+  runs out of memory, you'll get an OutOfMemoryException.` The difference between an unlimited
+  channel and a queue is that when a consumer tries to receive from an empty channel, it becomes
+  suspended until some new elements are sent.
+- By default, a "Rendezvous" channel is created.
+
+### Buffered channel
+
+- The size of a buffered channel is constrained by the specified number. Producers can send elements
+  to this channel until the size limit is reached. All of the elements are internally stored. When
+  the channel is full, the next `send` call on it is suspended until more free space becomes
+  available.
+
+### Rendezvous channel
+
+- The "Rendezvous" channel is a channel without a buffer, the same as a buffered channel with zero
+  size. `One of the functions (send() or receive()) is always suspended until the other is called.`
+
+### Conflated channel
+
+- A new element sent to the conflated channel `will overwrite the previously sent element, so the
+  receiver will always get only the latest element.` `The send() call is never suspended`
+
+### Closing and iteration over channels
+
+- Channel can be close to indicate that no more elements are coming.
+- As we know `channel.close()` is close the channel , now in receiver side as we are using for loop
+  to get the items like `for(value in channel)` it will get the values until the channel is not
+  close.
+- `channel.send()` it is a blocking code that means if we sned values in loop from i to 5 then only
+  1 value will be send if there is know receiver, that means `send()` will be blocked until the
+  value is received from the channel. in other words when a receiver receive() the value than send
+  will ready to send another value.
+
+```kotlin
+
+fun main() = runBlocking {
+    val channel = Channel<Int>()
+    launch {
+        for (i in 1..5) channel.send(i * i)
+    }
+    channel.close()
+
+    launch {
+        for (value in channel) {
+            println(value)
+        }
+    }
+}
+
+```
+
+### building Channel Producer
+
+- There is a convenient coroutine builder named produce that makes it easy to do it right on
+  producer side, and an extension function consumeEach, that replaces a for loop on the consumer
+  side:
+- Here we use the `produce{}` coroutine builder that provide and manage the channel for us and
+  return the `ReceiveChannel<E>`
+- `consumeEach{}` it is used to receive the values from channel. it is extension function
+  of `ReceiveChannel<E>`
+
+### Pipeline
+
+- Pipeline is a pattern where a coroutine produce a possible infinite streams of values.
+
+```kotlin
+fun <T, R> ReceiveChannel<T>.map(
+    coroutineScope: CoroutineScope,
+    transform: (T) -> R
+): ReceiveChannel<R> {
+    val receiveChannel = this
+    return coroutineScope.produce {
+        try {
+            for (value in receiveChannel) send(transform(value))
+        } catch (e: CancellationException) {
+            receiveChannel.cancel()
+        }
+    }
+}
+
+fun <T, R> map(
+    coroutineScope: CoroutineScope,
+    producer: ReceiveChannel<T>,
+    transform: (T) -> R
+): ReceiveChannel<R> = coroutineScope.produce {
+    for (value in producer) send(transform(value))
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+fun createPipelineOfNumbers(coroutineScope: CoroutineScope, start: Int): ReceiveChannel<Int> =
+    coroutineScope.produce {
+        var x = start
+        while (true) {
+            send(x++)
+            delay(500)
+        }
+    }
+
+fun consumePileLineData(coroutineScope: CoroutineScope, producer: ReceiveChannel<Int>) =
+    coroutineScope.launch {
+        producer.consumeEach {
+            println(it)
+        }
+    }
+
+fun main() = runBlocking {
+    val numbers = createPipelineOfNumbers(this, 1).map(this) {
+        it * it * it
+    }
+    // consumePileLineData(this, numbers)
+
+//    val squareProducer = map(this, numbers) {
+//        it * it
+//    }
+//    consumePileLineData(this, squareProducer)
+    consumePileLineData(this, numbers)
+    delay(5000)
+    numbers.cancel()
+}
+
+```
+
+```kotlin
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.runBlocking
+
+val rendezvousChannel = Channel<String>()
+val bufferedChannel = Channel<String>(10)
+val conflatedChannel = Channel<String>(CONFLATED)
+val unlimitedChannel = Channel<String>(UNLIMITED)
+
+
+fun main() = runBlocking {
+    produceChanel().consumeEach {
+        print("$it ")
+    }
+    println()
+
+}
+
+fun CoroutineScope.produceChanel(): ReceiveChannel<Int> = produce {
+    for (i in 1..5) send(i * i)
+}
+
+```
+
+### Fan-out
+
+- We have one producer and many consumer , Send the data to a channel and consumer consume the
+  data , Each consumer consume the data when they are ready to consume the data.
+
+### Fan-in
+
+- we have multiple producer and single consumer consume it data.
+
+### Load balancer
+
+- Producer fan out
+- Consumer Fan-in
+
+### Coroutine Select
+
+- Suppose we have multiple suspending functions , wnt to execute when any one of those is done.
+- In Kotlin coroutines, the “select” expression makes it possible to await multiple suspending
+  functions simultaneously and selects the first result that becomes available. It’s a suspending
+  function that is suspended until one of the clauses is either selected or fails
+- There’s a scenario in which you want to process “X” thing when anyone from data “A” or “B” becomes
+  available first.
+- You are running a few operations concurrently and whichever finishes (or returns result) first,
+  proceed with the result of the winner operation i.e. data race.
+- even select is bias that means one time it will select one producer , but it will not forget the
+  value pf previous producer.
+
+### Select Send
+
+- Problem when we have a producer that produce the data in each 100ms and consumer consume the data
+  in each 500 ms, As we know channel is blocked it will send another data after the first ine is
+  received. Like send 1 then it wait to 500 ms to be received and again 1 sec to send and again 5ms
+  to receive.
+- we can use the `select{ onSend() }` , it will not block the channel it will like it will send the
+  data as the some other channel is available to receive.
+
+```kotlin
+
+fun main() = runBlocking {
+
+    val winner = select<String> {
+        data1().onAwait { it }
+        data2().onAwait { it }
+    }
+    // winner is data1 = Hello coz it will complete in 1000 ms. 
+
+}
+
+fun data1() = GlobalScope.async {
+    delay(1000)
+    "Hello"
+}
+fun data2() = GlobalScope.async {
+    delay(2000)
+    "World"
+}
+```
+
+## Multithreaded environment
+
+- Fork / Join -> Asynchronous code in java style
+    - Fork , creation of multiple concurrent execution of branches , each executing a different part
+      of the code simultaneously.
+    - Join - typically refers to a synchronization point where the execution of the main thread or
+      coroutine waits for the completion of the forked execution branches.
+- Async{}.await() coroutine way to write Asynchronous code
+- Benefit of Asynchronous code
+    - Speedup code
+    - More efficient
+
+```kotlin
+fun main() {
+    val job1 = GlobalScope.launch {
+        // Code for first concurrent branch
+        println("Branch 1")
+    }
+
+    val job2 = GlobalScope.launch {
+        // Code for second concurrent branch
+        println("Branch 2")
+    }
+
+    // Ensure that the main function doesn't exit before both branches finish executing
+    runBlocking {
+        job1.join()
+        job2.join()
+    }
+}
+
+fun main() {
+    val job = GlobalScope.launch {
+        // Some asynchronous work
+        delay(1000)
+        println("Coroutine finished")
+    }
+
+    println("Main thread executing...")
+
+    // Wait for the coroutine to finish before continuing
+    runBlocking {
+        job.join()
+        println("Coroutine joined")
+    }
+
+    println("Main thread finished")
+}
+
+```
+
 ### Coroutine Scope
 
 - Coroutine Scope means when you launch a coroutine a coroutine scope created that tell us which
   kind of coroutine is launched.
 - `launch{this:coroutineScope}` same with async and any builder.
 - Each coroutine has its own coroutine scope.
+- The coroutine scope is responsible for the structure and `parent-child relationships` between
+  different coroutines. New coroutines usually need to be started inside a scope
 
 ### Coroutine Context
 
@@ -475,6 +783,13 @@ fun main() = runBlocking {
   coroutine using a collection of elements
 - The important elements of CoroutineContext are:
     - Job , CoroutineDispatcher, CoroutineName, CoroutineExceptionHandler
+- Context can flow to child coroutine , Child coroutine can inherit the behaviour of parent
+  coroutine.
+- CoroutineContext -> launch on parent coroutine context
+- Unconfined -> launch on the parent thread context and if delay than resume on some other thread.
+- The coroutine context stores additional technical information used to run a given coroutine, like
+  the coroutine custom name, or the dispatcher specifying the threads the coroutine should be
+  scheduled on
 
 ### Coroutine Dispatchers
 
@@ -596,7 +911,7 @@ public static final Object callHere(@NotNull Continuation var1) {
 
 - `Continuation ` is taking care of context of suspension and resume. this have the information when
   this one is need to resume. just like a callback for you provided by coroutine.
-- Its called `Continuation-Passing-Style` its like a Continuation State Machine
+- Its called `Continuation-Passing-Style`CPS its like a Continuation State Machine
 - call load -> suspend , state = 1
 - call load and when task is done -> resume state = 0
 - exit.
@@ -683,6 +998,7 @@ Clean up !
 
 - suspendCoroutine and suspendCancellableCoroutine are functions used to create suspending functions
   from callback-based or future-based asynchronous operations.
+
 ```kotlin
 suspend fun downloadFile(url: String): ByteArray {
     return suspendCoroutine { continuation ->
@@ -700,7 +1016,8 @@ suspend fun downloadFile(url: String): ByteArray {
     }
 }
 ```
--  Similar to suspendCoroutine, but provides built-in cancellation support.
+
+- Similar to suspendCoroutine, but provides built-in cancellation support.
 
 ```kotlin
 suspend fun downloadFileWithCancellation(url: String): ByteArray {
@@ -973,21 +1290,163 @@ class PlayVideo<T> where T : Video {
 - FLow is a coroutine that can emit multiple values over a period of times.
 - it is cold flow, that means if any one is not collection that flow than it is not emitting.
 
+## Cancel a flow
+
+- flow will be active as there collector will be active in below example ., we have cancel the job
+  that start collection the flow that means we cancel the collector after 5000 ms that why only 4 no
+  will be printed (1..4). After 5000ms the collector will cancel and flow will stop emitting data.
+
+```kotlin
+fun generateData() = flow<Int> {
+    var num = 1
+    while (true) {
+        delay(1000)
+        emit(num++)
+    }
+}.flowOn(Dispatchers.IO)
+
+fun generateFixedFlow() = flow<Int> {
+    for (i in 1..5) {
+        delay(100)
+        emit(i)
+    }
+}
+
+fun main(): Unit = runBlocking {
+    val coroutineScope = CoroutineScope(Dispatchers.Default)
+    val job = coroutineScope.launch {
+        generateData().collect {
+            println(it)
+        }
+    }
+    delay(5000)
+    job.cancel()
+    println("Start collection new")
+
+    launch {
+        generateFixedFlow().collect {
+            println("collect from 1 $it")
+        }
+    }
+
+    delay(300)
+    launch {
+        generateFixedFlow().collect {
+            println("collect from 2 $it")
+        }
+    }
+
+    delay(600)
+    launch {
+        generateFixedFlow().collect {
+            println("collect from 3 $it")
+        }
+    }
+
+    launch {
+        generateFixedFlow()
+            .map { "after map ${it * it}" }
+            .filter { it == "after map 16" }.collect {
+                println(it)
+            }
+    }
+
+    launch {
+        val result = generateFixedFlow().reduce { accumulator, value -> accumulator + value }
+        val resultMul = generateFixedFlow().reduce { accumulator, value -> accumulator * value }
+        println(result)
+        println(resultMul)
+    }
+
+    launch {
+        val result = generateFixedFlow().fold(10) { acc, value ->
+            acc + value
+        }
+        println("Fold result $result")
+    }
+
+}
+
+```
+
 ### FLOW Operator
 
 - transform the flow
+- `transform{}`
+- take(),takeWhile{predicate}
+- drop()
 - `flow.filter{ time%2==0}`
 - `map{time*time}`
 - `onEach` its not transform
 - `reduce{accumulator,value->accumulator+value}` adding all elements of list.{1,2,3,4,5} = 15
 - `fold(100){accumulator,value->accumulator+value}` => 115.
 - `flatmapCombine{}`
-- `flatmapMerge{}`
-- `flatmaplatest{}`
+- `flatmapMerge{}` -> merge flows concurrently.
+- `flatmaplatest{}` -> Collection of flow cancel as soon as another values comes available.
+- `flatmapConcat{}` -> wait for inner flow to complete before starting to collect next values.
 - `buffer()`Like we have a flow that is ordering the food and another on is consuming the food. so
   both produces and consumer run on different coroutines.
-- `conflate()` it will skip.
+- `conflate()` it will skip. it will provide you the most recent. it will like if we have delay(300)
+  at receiver and 100 at emitter side then we can use conflate it will skip(1,3) and print 0 2,4
+- `Zip()` -> it will use both flows values while both have different delay to emit the values.
+- in this example we have two data set one take(5) and another take(10), but due to zip it will call
+  when both emit successfully so only 5 values will be called.
+
+```kotlin
+   generateData(100)
+    .take(5)
+    .zip(generateData(1000).take(10)) { fast, slow ->
+        println("Fast $fast slow $slow")
+        fast + slow
+    }.collect {
+        println("After Zipping $it")
+    }
+```
+
+- `Combine()` combile the last value available.
+-
+
+```kotlin
+   generateData(100)
+    .take(5)
+    .conflate().collect {
+        delay(300)
+        println("Received After conflate $it")
+    }
+// output 1,3,5 print 
+```
+
 - `collectLatst{}` collecting the latest.
+- `Debounce` -> it is like we provide time to remove the duplicate or just like we want search on
+  keywoprds so put debounce for 1000
+- `transform<>` : Flow -> we can use multiple operator in one place
+  like` .transform{ emit(it),emit(it*2) } ` it will emit two flow.
+- `flowOn` -> change the context of the flow, like thread of flow is performing. we can not change
+  the
+  flow context inside the flow.
+
+### Buffering Flows
+
+- if collector is slower than emitter, may want to buffer the collector
+- its like if we emit the values in 100ms delay and collect the values in 500ms so collector is
+  slow. we waste a lot of time. to fix this problem we can use the buffer at the collector side.
+
+```kotlin
+fun main() = runBlocking {
+    val time = measureTimeMillis {
+        generateFixedFlow()
+            .take(5)
+            .buffer(5)
+            .collect {
+                delay(500)
+                println(it)
+            }
+    }
+
+    println("Time to print $time ms")
+}
+
+```
 
 ### Shared flow and State flow
 
@@ -996,10 +1455,15 @@ class PlayVideo<T> where T : Video {
 - it is used to keep the State. its not lifecycle aware , it is similar like live data.
 - it is hot flow. it will also do something if there is no collector.
 - it has default value
--
+- `mutableStateFlow(0)`
+- `stateFlow.update{}` it will guaranty that it will update concurrently and thread safe
 
 ## Shared Flow
 
+- `stateIn()` it is an operator that can turn a cold flow or flow to sharedFlow, it will take three
+  parameters `1. Scope 2.How To Start 3. Replay` `stateIn(scope,SharingStarted,cacheSize)`
+- `SharingStarted` Eagerly -> if flow is not starting collection still they emit and drop the
+  values. , lazy and WhileSubscribed()
 - IF we want to share the flow between multiple collectors than we should use this.
 - it is also hot flow.
 - we should use collect in place of collectLatest because we do not want to drop any events.
@@ -1045,9 +1509,12 @@ merge(flow1, flow2).onEach {
 }
 ```
 
-Channel
+### Catch and Finally in Flows
+- `try{}catch(){}`
+- `flow.catch{}`
+- `flow.onCompletion{}`
+- `check(condition){""Exception"}`
 
-- if we have just one collector than we should use the channel.
 
 ### Collections in Kotlin
 
@@ -1544,9 +2011,3 @@ fun main() {
 
 data class Person(val name: String, val age: Int, val company: String)
 ```
-
-
-
-
-
-  
