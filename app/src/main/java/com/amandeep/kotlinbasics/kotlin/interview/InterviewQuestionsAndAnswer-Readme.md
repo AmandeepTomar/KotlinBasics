@@ -1,6 +1,6 @@
 ## Android interview Question and Answers
 
-1. tell me difference between Serializable vs Parcelable
+1. Difference between Serializable vs Parcelable
 
 `Old way Serializable `
 
@@ -14,7 +14,7 @@
 - `Parcelable interface` and override methods such as` writeToParcel() and createFromParcel()`
 -
 
-2. what is the remember in compose
+2. What is the remember in compose?
 
 - It is used to hold and remember the state of UI, it will remember the old state of the Data if
   that one is not changed then recomposition is not happen if changed then recomposition happen.
@@ -22,15 +22,15 @@
   state of name than =it will not recompose the compose and we did not see anything on the screen
   after update name.
 
-3. what is the rememberSavable in compose
+3. what is the rememberSavable in compose?
    `ANS:` Use to survive the configuration changes in compose.
-4. what is recomposition in compose and how it's happen.
+4. what is recomposition in compose and how it will happen?
    `Ans:` Once the UI draw it can not be changed coz it is immutable , if we want to chage the UI
    then we need to change the State of UI that is responsible for change the state of UI using data.
    so when we have changed any data in the state the Ui will be recomposed.
-5. what is launch effect in compose where you will use it.
+5. what is launchEffect in compose where you will use it?
     - inside the composeScope for loadingData , do background and time consuming tasks.
-6. tell me about coroutineScope of launchEffect.
+6. Difference coroutineScope of launchEffect.
 
 - `coroutineScope`
     - you're responsible for cancelling the coroutines launched within its scope if needed.
@@ -41,7 +41,7 @@
     - is specifically designed for use in Jetpack Compose components to handle side effects related
       to UI composition.
 
-7. how launch effect coroutine scope behave in case of you minimize the app.
+7. How launchEffect and coroutineScope behave in case of minimize the app?
 
 `When the app is minimized or not visible:`
 
@@ -64,9 +64,8 @@ coroutines accordingly if needed.
 9. In case a part of your UI is complex and cannot be achieved by using Jetpack Compose, how would
    you integrate XML into your Compose-based UI?
    `Ans:` -> using `AndroidView{ factory->(context){},update{->View}}`
-10. realtime example of hot flow and cold flow
-11. in which use case you will use hot flow and cold flow in your project
-12. different between hot flow and cold flow.
+10. What is Cold and Hot Flow , Realtime example of hot flow and cold flow and their use-cases and
+    difference between them.
 
 - `FLow`-> cold flow , if no collector it will not emmit , when ever the collector attached it itr
   will collect from start.
@@ -88,36 +87,35 @@ regardless of whether there are any collectors attached to it.
 13. How would you expose ViewModel state to Jetpack Compose, and what approach would you take to
     collect ViewModel state and flows within a Composable function.
     `StateFlow<Data>->it will collect in Ui using collectAsLifeCycleState()`
-14. how you will achieve data flow with api call to ui layer->StateFlow(ViewModel)->UseCase->
+14. How you will achieve data flow with api call to ui layer->StateFlow(ViewModel)->UseCase->
     Repository->Data
-15. how you will call api and implement in clean architecture -> MVVM/MVI
+15. How you will call api and implement in clean architecture -> MVVM/MVI
 16. what is the scope in coroutines and different between all scope
     `runBlockingScope{},GlobalScope{} ,launch{},asyncAwait{}, coroutioneScope{}`
-17. senario base question on viewmodel scope and configuration changes.
+17. Questions on viewModelScope and configuration changes.
     `Ans:`  ViewModelScope -> explained below , How it survive configuration changes -> Internal
     working of
     viewModel.
 18. How do you ensure that UI data is preserved and can be displayed again in your application if
     the operating system kills your app's process?
 
-- use saveStateHandler in viewModel on the it is bundle and saved data in bundle so you can save and
+- use `saveStateHandler in viewModel` on the it is bundle and saved data in bundle so you can save
+  and
   get the data after process death.
-
-19. what is saveStatehandler in viewmodel
-
 - it is useful to survive the process death.
 
-20. diffrent between state flow and shared flow and usecases of both of theme.
+19. diffrent between state flow and shared flow and usecases of both of theme.
 
 `Ans:` -> When we want to hold the latest stae use stateFlow.
 
 - When we want to share the same flow between multiple collector use sharedFlow ,use case errorShow
   it will not trigger again and again.
 
-21. what all think take care while you are going to develop application
+20. what all think take care while you are going to develop application
     `Ans:`  Architecture , Screen orientation and screen sizes , Dark and light theme support,
     Security , Data store policy , Https network configuration , certificate pinning and all.
-22. how viewmodel scope and lifecycle scope behave when you minmize the app
+
+21. how viewModel scope and lifecycle scope behave when you minmize the app
 
 ### ViewModel Scope:
 
@@ -144,7 +142,8 @@ regardless of whether there are any collectors attached to it.
   can use the the lifecycle scope or activity or Fragment so that this will fetch the background
   task or data until the view is visible.
 
-23. how viewmodel scope behave when you navigate to another activity
+
+22. How viewModel scope behave when you navigate to another activity
 
 ### If Activity Finished
 
@@ -161,9 +160,9 @@ regardless of whether there are any collectors attached to it.
   associated with it will be retained`
 - `The ViewModel maintains its state across configuration changes and lifecycle events.`
 
-24. how you will define ui state in your project -> as DataClass
-25. how you will define ui action -> SealedCLass
-26. Which static code analysis tools you have used? link , kLink
+24. How you will define ui state in your project -> as DataClass
+25. How you will define ui action -> SealedCLass
+
 27. Apart SONAR which other tools you used? sonarQube and Detek (Need to check)
 28. How you will find out memory leaks in app? ->?Memory Profiler and LeackCanery.
 29. what will happen if there are memory leaks in your android app? -> hold the object for more time
@@ -194,7 +193,6 @@ regardless of whether there are any collectors attached to it.
     `Action` -> take action to resolve the conflicts, just like with clear and solid communication
     and statics. what every you are saying must be data driven.
     `Result` -> It should be positive result.
-53. What is the difference between merge and rebase?
 
 
 54. How CI/CD pipeline works?
@@ -249,8 +247,6 @@ regardless of whether there are any collectors attached to it.
 
 - using FCM, Notification Also.
 
-58. What is GraphQL and its benifits?
-
 ### 59. Difference between sealed interface and Enum
 
 Ands: sealed interface is not searilazed while Enum is.
@@ -260,11 +256,14 @@ Ands: sealed interface is not searilazed while Enum is.
 Ans: - MVI has race condition while MVVM has not , we can fix it using MVVM + MVI. using
 stateFlow.update{} this one is thread safe.
 
-8. tell me about unidirection data flow in compose
-43. What is jetpack compose?
-44. What is composables?
-45. Advanteges of jetpack compose?
-46. AB testing and server driven UI.
-47. GraphQL ab testing.
-48. How you will implement deeplink?
-49. What changes you do in Android to implement deeplink?
+58. What is unidirection data flow in compose
+59. What is jetpack compose?
+60. What is composables?
+61. Advanteges of jetpack compose?
+62. AB testing and server driven UI.
+63. GraphQL ab testing.
+64. How you will implement deeplink?
+65. What changes you do in Android to implement deeplink?
+66. Which static code analysis tools you have used? link , kLink
+67. What is GraphQL and its benifits?
+68. What is the difference between merge and rebase?
